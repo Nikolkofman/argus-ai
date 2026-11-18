@@ -1,0 +1,11 @@
+build/
+.vs/
+out/
+vcpkg_installed/
+.claude/
+nul
+*.user
+*.exe
+*.dll
+*.pdb
+*.obj
