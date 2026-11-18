@@ -177,8 +177,10 @@ features it was trained on.
 
 The score appears in the report and the JSON verdict, but it **does not
 override** the rule-based classification. When the two disagree, the report says
-so. A known example: the GRU leans on cross-process signals, so in-process
-injection is its blind spot (see argus-ml's RESULTS).
+so. Where they can disagree: in-process self-injection looks almost like a
+benign JIT, so the GRU only catches it when that technique is in its training
+set (see argus-ml's RESULTS, leave-one-technique-out). With the trained
+`model.pt` it agrees with the rules on the sample capture (P(injection) = 0.82).
 
 ## Design decisions
 

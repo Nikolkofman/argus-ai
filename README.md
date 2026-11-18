@@ -1,12 +1,12 @@
-# Argus AI: ML and LLM layers for the ArgusEDR endpoint detection system
+# Argus AI: ArgusEDR with ML and LLM layers
 
-My follow-up project to [ArgusEDR](https://github.com/lotem-g30/EDR), a team-built
-Windows EDR in C++ (Win32 API hooks, named-pipe IPC, PE-Sieve, YARA, ETW, and a
-rule-based correlator). This repo adds two AI layers on top of the EDR's own
-telemetry:
+ArgusEDR is a Windows EDR in C++ with a live dashboard. It uses Win32 API hooks,
+named-pipe IPC, PE-Sieve, YARA, ETW, and a rule-based correlator. This repo puts
+the original EDR together with my follow-up work: two AI layers that read the
+EDR's own telemetry.
 
 ```
- ArgusEDR (C++, team project)      argus-ml/ (PyTorch)              argus-copilot/ (LLM agent)
+ edr/ (C++, ArgusEDR)              argus-ml/ (PyTorch)              argus-copilot/ (LLM agent)
  ───────────────────────────       ─────────────────────────        ──────────────────────────
  Win32 hooks → named-pipe IPC      GRU over the same hook events    tool-use agent: timeline ·
  PE-Sieve · YARA · ETW             → P(injection)                   findings · ATT&CK · GRU score
@@ -19,6 +19,7 @@ including when they disagree.
 
 | Folder | What it is | Start here |
 |---|---|---|
+| [`edr/`](edr) | The original ArgusEDR: agent, hook DLL, PE-Sieve/YARA scanning, the Diamond FSM correlator, and the dashboard. Imported with its full git history. | [README](edr/README.md) |
 | [`argus-ml/`](argus-ml) | A GRU that flags process injection from sequences of hooked API calls. It trains on traces collected from the EDR's own attack tests. | [README](argus-ml/README.md) · [GUIDE](argus-ml/GUIDE.md) · [RESULTS](argus-ml/RESULTS.md) |
 | [`argus-copilot/`](argus-copilot) | An LLM incident analyst. It investigates a flagged process with tools, maps it to MITRE ATT&CK, and writes a report. It also ships a CLI, a FastAPI service, a dashboard "Explain" button, evals and tests. | [README](argus-copilot/README.md) |
 
@@ -37,8 +38,9 @@ python _smoke_test.py
 ```
 
 The two parts connect automatically. `argus-copilot` finds the sibling
-`argus-ml/` folder, and once a trained `model.pt` is there it offers the GRU to
-the agent as a fourth tool.
+`argus-ml/` folder and its trained `model.pt`, which is included together with
+the collected traces in `argus-ml/data/`. When torch is installed, the agent
+gets the GRU as a fourth tool.
 
 ## CI
 
@@ -48,10 +50,12 @@ the agent as a fourth tool.
 
 ## Credits
 
-ArgusEDR, the base system, is a team project. See
-[its repository](https://github.com/lotem-g30/EDR) for the team and credits.
-`argus-ml` and `argus-copilot` are my own follow-up work.
+`edr/` is the original ArgusEDR team project, imported from
+[its repository](https://github.com/lotem-g30/EDR) with its commit history, so
+every contributor's work stays attributed. See [`edr/README.md`](edr/README.md)
+for the team. `argus-ml/` and `argus-copilot/` are my own follow-up work.
 
 ## License
 
-MIT © Nikol Kofman (this repository). ArgusEDR has its own repository and license.
+`argus-ml/` and `argus-copilot/`: MIT © Nikol Kofman. `edr/` keeps the terms of
+its original repository.
