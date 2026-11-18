@@ -1,0 +1,6 @@
+[IPC] event: {"api":"VirtualAllocEx","pid":5300,"target_pid":5300,"size":4096,"protect":4}
+[IPC] event: {"api":"WriteProcessMemory","pid":5300,"target_pid":5300,"size":480}
+[IPC] event: {"api":"VirtualProtect","pid":5300,"target_pid":5300,"size":4096,"protect":32}
+[IPC] event: {"api":"CreateThread","pid":5300,"target_pid":5300}
+{"type":"verdict","pid":5300,"process":"test_target.exe","severity":"HIGH","rules":["ALLOC","WRITE","PROTECT"]}
+{"type":"finding","pid":5300,"process":"test_target.exe","finding":"FINDING_CODE_CAVE","severity":"HIGH","source":"pe-sieve","detail":"executable private region with no backing module"}

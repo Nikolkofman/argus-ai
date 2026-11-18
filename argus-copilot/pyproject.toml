@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "argus-copilot"
+version = "0.1.0"
+description = "LLM incident analyst (tool-use agent) over ArgusEDR endpoint telemetry"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Nikol Kofman" }]
+requires-python = ">=3.9"
+dependencies = []            # the core + mock backend use only the standard library
+
+[project.optional-dependencies]
+claude = ["anthropic>=0.40"]
+api = ["fastapi>=0.110", "uvicorn>=0.29", "httpx>=0.27"]
+ml = ["torch>=2.0"]
+all = ["anthropic>=0.40", "fastapi>=0.110", "uvicorn>=0.29", "httpx>=0.27", "torch>=2.0"]
+
+[project.scripts]
+argus-copilot = "argus_copilot.cli:main"
+
+[tool.setuptools]
+packages = ["argus_copilot"]

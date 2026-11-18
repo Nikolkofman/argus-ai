@@ -1,0 +1,5 @@
+[IPC] event: {"api":"VirtualAllocEx","pid":5690,"target_pid":5700,"size":4096,"protect":4}
+[IPC] event: {"api":"WriteProcessMemory","pid":5690,"target_pid":5700,"size":300}
+[IPC] event: {"api":"VirtualProtect","pid":5690,"target_pid":5700,"size":4096,"protect":32}
+[IPC] event: {"api":"CreateRemoteThread","pid":5690,"target_pid":5700}
+{"type":"verdict","pid":5700,"process":"explorer.exe","severity":"MEDIUM","rules":["ALLOC","WRITE","CROSS_PROCESS"]}

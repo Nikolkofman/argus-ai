@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.env
+
+# Trained model checkpoints
+*.pt
+
+# Captured datasets (collect.py output). These are telemetry captures produced
+# on the Windows machine; keep them out of version control by default. To
+# publish a small sample, force-add it:  git add -f data/sample.ndjson
+data/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/

@@ -1,0 +1,104 @@
+<!--
+  Argus Copilot — "Explain" button + slide-in report panel for the dashboard.
+
+  1. Paste this whole block before </body> in dashboard/index.html.
+  2. Wherever the dashboard renders a process row, add a button:
+         row.appendChild(explainButton(pid));
+     or in HTML:
+         <button class="argus-explain-btn" onclick="explainProcess(4120)">Explain</button>
+-->
+<style>
+  .argus-explain-btn {
+    font: 600 12px/1 system-ui, sans-serif; padding: 6px 10px; cursor: pointer;
+    border: 1px solid #3b82f6; border-radius: 6px; background: transparent; color: #3b82f6;
+  }
+  .argus-explain-btn:hover { background: #3b82f6; color: #fff; }
+  #argus-explain-panel {
+    position: fixed; top: 0; right: 0; height: 100vh; width: min(560px, 92vw);
+    background: #0f172a; color: #e2e8f0; box-shadow: -8px 0 24px rgba(0,0,0,.35);
+    transform: translateX(100%); transition: transform .25s ease; z-index: 9999;
+    display: flex; flex-direction: column; font: 14px/1.5 system-ui, sans-serif;
+  }
+  #argus-explain-panel.open { transform: translateX(0); }
+  #argus-explain-panel header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 18px; border-bottom: 1px solid #1e293b;
+  }
+  #argus-explain-panel header button {
+    background: none; border: 0; color: #94a3b8; font-size: 20px; cursor: pointer;
+  }
+  #argus-explain-body { padding: 16px 18px; overflow-y: auto; flex: 1; }
+  .argus-chip {
+    display: inline-block; padding: 2px 8px; margin: 0 6px 8px 0; border-radius: 999px;
+    font: 600 12px/1.6 system-ui, sans-serif; background: #1e293b;
+  }
+  .argus-chip.malicious { background: #7f1d1d; } .argus-chip.suspicious { background: #78350f; }
+  .argus-chip.benign { background: #14532d; }
+  #argus-explain-body pre {
+    white-space: pre-wrap; word-break: break-word; background: #020617;
+    padding: 12px; border-radius: 8px; font: 12.5px/1.5 ui-monospace, monospace;
+  }
+  .argus-trace { color: #94a3b8; font: 12px/1.6 ui-monospace, monospace; }
+</style>
+
+<aside id="argus-explain-panel" aria-label="Copilot incident report">
+  <header>
+    <strong id="argus-explain-title">Copilot</strong>
+    <button type="button" onclick="closeExplain()" aria-label="Close">×</button>
+  </header>
+  <div id="argus-explain-body"></div>
+</aside>
+
+<script>
+  function explainButton(pid) {
+    const b = document.createElement("button");
+    b.className = "argus-explain-btn";
+    b.textContent = "Explain";
+    b.onclick = () => explainProcess(pid);
+    return b;
+  }
+
+  function closeExplain() {
+    document.getElementById("argus-explain-panel").classList.remove("open");
+  }
+
+  function chip(text, cls) {
+    const s = document.createElement("span");
+    s.className = "argus-chip" + (cls ? " " + cls : "");
+    s.textContent = text;
+    return s;
+  }
+
+  async function explainProcess(pid) {
+    const panel = document.getElementById("argus-explain-panel");
+    const body = document.getElementById("argus-explain-body");
+    document.getElementById("argus-explain-title").textContent = "Copilot · PID " + pid;
+    body.replaceChildren(document.createTextNode("Analyzing…"));
+    panel.classList.add("open");
+
+    try {
+      const res = await fetch("/api/explain/" + encodeURIComponent(pid), { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || res.statusText);
+
+      body.replaceChildren();
+      const c = data.classification || {};
+      if (c.classification) body.appendChild(chip(c.classification, c.classification));
+      if (c.severity) body.appendChild(chip("severity " + c.severity));
+      if (c.technique_id) body.appendChild(chip(c.technique_id));
+      if (c.ml_probability != null) body.appendChild(chip("GRU p=" + c.ml_probability));
+      body.appendChild(chip(data.backend));
+
+      const trace = document.createElement("div");
+      trace.className = "argus-trace";
+      trace.textContent = "tools: " + (data.tool_trace || []).map(t => t.name).join(" → ");
+      body.appendChild(trace);
+
+      const pre = document.createElement("pre");   // textContent = no HTML injection
+      pre.textContent = data.report;
+      body.appendChild(pre);
+    } catch (err) {
+      body.replaceChildren(document.createTextNode("Could not explain PID " + pid + ": " + err.message));
+    }
+  }
+</script>

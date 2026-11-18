@@ -1,0 +1,34 @@
+name: ci
+
+on: [push, pull_request]
+
+jobs:
+  copilot:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: argus-copilot
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -e ".[claude,api]"
+      - name: Unit tests (offline; Claude wiring tested against a local fake API)
+        run: python -m unittest discover -s tests -v
+      - name: Evals (mock backend, fails on any misclassification)
+        run: python evals/run_evals.py
+
+  ml:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: argus-ml
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install torch --index-url https://download.pytorch.org/whl/cpu
+      - name: Pipeline smoke test (abstract data, not a model evaluation)
+        run: python _smoke_test.py

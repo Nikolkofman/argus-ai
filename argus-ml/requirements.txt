@@ -1,0 +1,5 @@
+# Training and evaluation (model.py, train.py, evaluate.py, dataset.py, _smoke_test.py)
+torch>=2.0
+
+# collect.py uses only the Python standard library — no dependencies needed to
+# capture traces on the Windows machine running the agent.

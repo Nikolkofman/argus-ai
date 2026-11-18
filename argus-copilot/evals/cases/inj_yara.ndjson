@@ -1,0 +1,4 @@
+[IPC] event: {"api":"VirtualAlloc","pid":5600,"target_pid":5600,"size":4096,"protect":64}
+[IPC] event: {"api":"CreateThread","pid":5600,"target_pid":5600}
+{"type":"verdict","pid":5600,"process":"test_target.exe","severity":"MEDIUM","rules":["ALLOC","RWX"]}
+{"type":"finding","pid":5600,"process":"test_target.exe","finding":"FINDING_YARA_MATCH","severity":"HIGH","source":"yara","detail":"rule Argus_Generic_Shellcode matched in a private RWX region"}

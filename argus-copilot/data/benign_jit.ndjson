@@ -1,0 +1,5 @@
+[IPC] event: {"api":"VirtualAlloc","pid":8080,"target_pid":8080,"size":65536,"protect":4}
+[IPC] event: {"api":"VirtualProtect","pid":8080,"target_pid":8080,"size":65536,"protect":32}
+[IPC] event: {"api":"VirtualAlloc","pid":8080,"target_pid":8080,"size":65536,"protect":4}
+[IPC] event: {"api":"VirtualProtect","pid":8080,"target_pid":8080,"size":65536,"protect":32}
+{"type":"verdict","pid":8080,"process":"node.exe","severity":"LOW","rules":["ALLOC","PROTECT"]}

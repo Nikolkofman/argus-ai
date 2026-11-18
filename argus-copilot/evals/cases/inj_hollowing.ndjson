@@ -1,0 +1,6 @@
+[IPC] event: {"api":"VirtualAllocEx","pid":5390,"target_pid":5400,"size":200704,"protect":64}
+[IPC] event: {"api":"WriteProcessMemory","pid":5390,"target_pid":5400,"size":1024}
+[IPC] event: {"api":"WriteProcessMemory","pid":5390,"target_pid":5400,"size":61440}
+[IPC] event: {"api":"WriteProcessMemory","pid":5390,"target_pid":5400,"size":8192}
+{"type":"verdict","pid":5400,"process":"svchost.exe","severity":"CRITICAL","rules":["ALLOC","WRITE","CROSS_PROCESS","RWX"]}
+{"type":"finding","pid":5400,"process":"svchost.exe","finding":"FINDING_HOLLOWED","severity":"CRITICAL","source":"pe-sieve","detail":"main image in memory does not match the file on disk"}

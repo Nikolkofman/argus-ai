@@ -1,0 +1,8 @@
+ArgusEDR Agent started
+[IPC] event: {"api":"VirtualAlloc","pid":2264,"target_pid":2264,"size":8192,"protect":4}
+[IPC] event: {"api":"VirtualAllocEx","pid":4120,"target_pid":4120,"size":4096,"protect":4}
+[IPC] event: {"api":"WriteProcessMemory","pid":4120,"target_pid":4120,"size":512}
+[IPC] event: {"api":"VirtualProtect","pid":4120,"target_pid":4120,"size":4096,"protect":32}
+[IPC] event: {"api":"CreateThread","pid":4120,"target_pid":4120}
+{"type":"verdict","pid":4120,"process":"test_target.exe","severity":"HIGH","rules":["ALLOC","WRITE","PROTECT"]}
+{"type":"finding","pid":4120,"process":"test_target.exe","finding":"FINDING_CODE_CAVE","severity":"HIGH","source":"pe-sieve","detail":"executable private region with no backing module"}

@@ -1,0 +1,6 @@
+[IPC] event: {"api":"VirtualProtect","pid":5500,"target_pid":5500,"size":4096,"protect":4}
+[IPC] event: {"api":"WriteProcessMemory","pid":5500,"target_pid":5500,"size":2048}
+[IPC] event: {"api":"VirtualProtect","pid":5500,"target_pid":5500,"size":4096,"protect":32}
+[IPC] event: {"api":"CreateThread","pid":5500,"target_pid":5500}
+{"type":"verdict","pid":5500,"process":"test_target.exe","severity":"MEDIUM","rules":["WRITE","PROTECT"]}
+{"type":"finding","pid":5500,"process":"test_target.exe","finding":"FINDING_MODULE_STOMPING","severity":"HIGH","source":"pe-sieve","detail":"code section of a loaded DLL differs from its file on disk"}

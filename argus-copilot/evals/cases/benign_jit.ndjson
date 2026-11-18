@@ -1,0 +1,5 @@
+[IPC] event: {"api":"VirtualAlloc","pid":5100,"target_pid":5100,"size":131072,"protect":4}
+[IPC] event: {"api":"VirtualProtect","pid":5100,"target_pid":5100,"size":131072,"protect":32}
+[IPC] event: {"api":"VirtualAlloc","pid":5100,"target_pid":5100,"size":65536,"protect":4}
+[IPC] event: {"api":"VirtualProtect","pid":5100,"target_pid":5100,"size":65536,"protect":32}
+{"type":"verdict","pid":5100,"process":"pwsh.exe","severity":"LOW","rules":["ALLOC","PROTECT"]}
