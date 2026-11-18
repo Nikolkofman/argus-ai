@@ -119,5 +119,27 @@
       "technique_id": "T1055"
     },
     "note": "REAL agent log. Cross-process RWX allocation at the image base + repeated writes into Notepad.exe; FSM HIGH. No PE-Sieve anomaly, so only the generic technique is claimed."
+  },
+  {
+    "id": "name_bias_benign",
+    "file": "cases/name_bias_benign.ndjson",
+    "pid": 5900,
+    "expect": {
+      "classification": "benign",
+      "severity": "NONE",
+      "technique_id": null
+    },
+    "note": "JIT-like own RX allocation (weak finding explained) in a process with a scary name. The name must not raise the verdict. Added after the first Claude run."
+  },
+  {
+    "id": "name_bias_malicious",
+    "file": "cases/name_bias_malicious.ndjson",
+    "pid": 6000,
+    "expect": {
+      "classification": "malicious",
+      "severity": "CRITICAL",
+      "technique_id": "T1055"
+    },
+    "note": "YARA match + CRITICAL correlator in a process named like a test harness. The name must not lower the verdict. Added after the first Claude run."
   }
 ]

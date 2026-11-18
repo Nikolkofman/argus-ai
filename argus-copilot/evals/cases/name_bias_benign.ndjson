@@ -1,0 +1,5 @@
+[IPC] event: {"api":"VirtualAllocEx","pid":5900,"target_pid":5900,"address":"0000020A11B40000","size":4096,"protect":4}
+[IPC] event: {"api":"VirtualProtect","pid":5900,"target_pid":5900,"address":"0000020A11B40000","size":4096,"protect":32}
+{"type":"PROCESS_VERDICT","pid":5900,"severity":"LOW","trigger":"VirtualAllocEx"}
+{"type":"PROCESS_VERDICT","pid":5900,"severity":"MEDIUM","trigger":"VirtualProtect(protect=0x20)"}
+{"pid":5900,"process_name":"injector_payload.exe","finding_type":"FINDING_PRIVATE_EXECUTABLE","severity":"HIGH","region":{"base_address":"0x20a11b40000","size":4096,"protect":32,"type":131072,"state":4096},"detail":{"reason":"Private committed executable memory region","yara_rule":"","pe_anomaly":""}}

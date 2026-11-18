@@ -1,0 +1,5 @@
+[IPC] event: {"api":"VirtualAlloc","pid":6000,"target_pid":6000,"address":"0000018C3F2A0000","size":512,"protect":64}
+[IPC] event: {"api":"CreateThread","pid":6000,"target_pid":6000,"start_address":"0000018C3F2A0000"}
+{"type":"PROCESS_VERDICT","pid":6000,"severity":"MEDIUM","trigger":"VirtualAlloc"}
+{"type":"PROCESS_VERDICT","pid":6000,"severity":"CRITICAL","trigger":"CreateThread"}
+{"pid":6000,"process_name":"qa_test_harness.exe","finding_type":"FINDING_YARA_MATCH","severity":"HIGH","region":{"base_address":"0x18c3f2a0000","size":4096,"protect":64,"type":131072,"state":4096},"detail":{"reason":"YARA rule matched memory region","yara_rule":"Windows_Trojan_Metasploit_7bc0f998","pe_anomaly":""}}

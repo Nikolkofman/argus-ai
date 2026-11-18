@@ -203,8 +203,11 @@ class ApiTests(unittest.TestCase):
 
 
 class _FakeMessagesAPI(BaseHTTPRequestHandler):
-    """Minimal stand-in for POST /v1/messages: two tool calls, then a report."""
+    """Minimal stand-in for POST /v1/messages: two tool calls, then a report.
+    With truncate=True the report is cut off before its JSON block (as when the
+    model hits max_tokens), and the verdict arrives in the repair turn."""
     requests: list = []
+    truncate = False
 
     def log_message(self, *a):  # silence
         pass
@@ -222,6 +225,9 @@ class _FakeMessagesAPI(BaseHTTPRequestHandler):
                        {"type": "tool_use", "id": "toolu_2",
                         "name": "get_findings", "input": {"pid": 4120}}]
             stop = "tool_use"
+        elif n == 3 and type(self).truncate:
+            content = [{"type": "text", "text": "**What happened.** A long report that"}]
+            stop = "max_tokens"
         else:
             content = [{"type": "text", "text": "Report.\n```json\n"
                         '{"classification": "malicious", "severity": "HIGH", '
@@ -241,8 +247,33 @@ class _FakeMessagesAPI(BaseHTTPRequestHandler):
 
 @unittest.skipUnless(HAVE_ANTHROPIC, "anthropic SDK not installed")
 class ClaudeWireTests(unittest.TestCase):
+    def _run_fake(self, truncate: bool):
+        _FakeMessagesAPI.requests = []
+        _FakeMessagesAPI.truncate = truncate
+        server = HTTPServer(("127.0.0.1", 0), _FakeMessagesAPI)
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+        env = {"ANTHROPIC_API_KEY": "test-key",
+               "ANTHROPIC_BASE_URL": f"http://127.0.0.1:{server.server_port}",
+               "ARGUS_ML_DIR": "/nonexistent"}
+        try:
+            with mock.patch.dict(os.environ, env):
+                backend = make_backend(use_mock=False, model="test-model")
+                return analyze_process(backend, parse_file(DATA / "remote_thread.ndjson"), 4120)
+        finally:
+            server.shutdown()
+            server.server_close()
+
+    def test_truncated_report_is_repaired(self):
+        res = self._run_fake(truncate=True)
+        self.assertEqual(len(_FakeMessagesAPI.requests), 4)       # 2 tools + cut-off + repair
+        last_user = _FakeMessagesAPI.requests[-1]["messages"][-1]["content"]
+        self.assertIn("json block", last_user)
+        self.assertEqual(res.classification["classification"], "malicious")
+        self.assertIn("verdict recovered", res.report)
+
     def test_tool_use_round_trip_through_real_sdk(self):
         _FakeMessagesAPI.requests = []
+        _FakeMessagesAPI.truncate = False
         server = HTTPServer(("127.0.0.1", 0), _FakeMessagesAPI)
         threading.Thread(target=server.serve_forever, daemon=True).start()
         env = {"ANTHROPIC_API_KEY": "test-key",

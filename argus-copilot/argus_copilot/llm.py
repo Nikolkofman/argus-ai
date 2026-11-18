@@ -53,7 +53,7 @@ class LLMBackend(Protocol):
 # ── real model ───────────────────────────────────────────────────────────────
 
 class ClaudeBackend:
-    def __init__(self, model: Optional[str] = None, max_tokens: int = 2048,
+    def __init__(self, model: Optional[str] = None, max_tokens: int = 4096,
                  api_key: Optional[str] = None) -> None:
         try:
             import anthropic
