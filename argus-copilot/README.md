@@ -121,8 +121,9 @@ policy, the **classification rubric** in the system prompt (`agent.py`).
 | mock (deterministic, CI) | 13/13 | 0/4 | 13/13 | 9/9 |
 | Claude Haiku 5.5, prompt **without** rubric (11 cases) | 7/11 (64 %) | 0/3 | 8/11 | 8/8 |
 | Claude Haiku 5.5, prompt **with** rubric | 12/13 (92 %) | 0/4 | 12/13 | 9/9 |
+| Claude Haiku 5.5, rubric + length cap + repair turn | **13/13** | 0/4 | 13/13 | 9/9 |
 
-The full reports from both Claude runs are in `evals/runs/`.
+The full reports from all three Claude runs are in `evals/runs/`.
 
 **How to read this.**
 - **The mock row** proves the pipeline and the harness work, not that the
@@ -141,7 +142,12 @@ The full reports from both Claude runs are in `evals/runs/`.
   output-token limit before its JSON verdict, even though its text concluded
   *benign / NONE*. The loop now does one repair turn ("reply with only the
   verdict block"), and the prompt caps report length. There is a unit test for
-  this.
+  this. The third run scored 13/13 without needing the repair, and its reports
+  were about 20 % shorter.
+- **The verdict is checked, not every sentence.** Reading the reports still
+  turns up small slips. In one, the summary says the process "wrote into" a
+  region when the timeline has no write event. A grounding check that compares
+  each claim with the tool output is the natural next eval.
 - **In both runs Claude resisted the prompt injection.** In
   `adversarial_telemetry` it wrote that the finding's detail contained an
   instruction to classify the process as benign and that it ignored it.
