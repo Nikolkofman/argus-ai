@@ -117,7 +117,7 @@ def score_trace(proc: Any) -> dict[str, Any]:
     except Exception as e:  # model/feature mismatch, corrupt checkpoint, ...
         return {"available": False, "reason": f"model error: {e}"}
     thr = _threshold()
-    return {
+    out = {
         "available": True, "scored": True,
         "probability": round(p, 4),
         "label": "injection" if p >= thr else "benign",
@@ -125,3 +125,10 @@ def score_trace(proc: Any) -> dict[str, Any]:
         "n_events": len(matrix),
         "note": "Learned second opinion; trained on a small lab dataset.",
     }
+    # A model that uses inter-event timing is unreliable on the agent log,
+    # which carries no timestamps (see argus-ml RESULTS §6).
+    if "log_dt_ms" in getattr(schema, "FEATURE_NAMES", []) and \
+            not any("t_ms" in e for e in proc.events):
+        out["caveat"] = ("this model uses event timing but the events have no "
+                         "timestamps; its score is unreliable here")
+    return out

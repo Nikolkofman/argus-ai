@@ -70,14 +70,22 @@ def protect_is_write(protect: int | None) -> bool:
 
 
 # ── Feature layout ────────────────────────────────────────────────────────────
-# [ api one-hot (6) | cross_process | exec | write | log10(size) | log10(dt_ms) ]
+# [ api one-hot (6) | cross_process | exec | write | log10(size) ]
+#
+# Timing is OFF. The agent's events carry no timestamp, so collect.py records
+# *arrival* time — and in the lab captures that mostly measured the test
+# harness (test_target waits for Enter between steps, ~20 s gaps). The model
+# learned that tempo as an injection cue: with timestamps removed, as in the
+# live agent log, its remote_thread score fell from 0.99 to 0.35 (RESULTS §6).
+# Turn this back on only once the hook DLL stamps real event times.
+USE_TIMING = False
+
 FEATURE_NAMES = API_NAMES + [
     "cross_process",   # target_pid != pid  → a cross-process operation
     "exec_protect",    # protection grants execute
     "write_protect",   # protection grants write
     "log_size",        # log10(size + 1), 0 for thread events
-    "log_dt_ms",       # log10(inter-event delta + 1); 0 for the first event
-]
+] + (["log_dt_ms"] if USE_TIMING else [])   # log10(inter-event delta + 1)
 N_FEATURES = len(FEATURE_NAMES)
 
 
@@ -85,7 +93,7 @@ def event_to_vector(event: dict[str, Any], prev_t_ms: float | None) -> list[floa
     """Convert one event dict into a fixed-length feature vector.
 
     prev_t_ms is the timestamp of the previous event in the same trace (or None
-    for the first event), used to derive the inter-event time delta.
+    for the first event); used only when USE_TIMING is on.
     """
     vec = [0.0] * N_FEATURES
 
@@ -105,12 +113,13 @@ def event_to_vector(event: dict[str, Any], prev_t_ms: float | None) -> list[floa
     size = event.get("size", 0) or 0
     vec[N_API + 3] = math.log10(size + 1.0)
 
-    t_ms = event.get("t_ms")
-    if t_ms is not None and prev_t_ms is not None:
-        dt = max(0.0, float(t_ms) - float(prev_t_ms))
-    else:
-        dt = 0.0
-    vec[N_API + 4] = math.log10(dt + 1.0)
+    if USE_TIMING:
+        t_ms = event.get("t_ms")
+        if t_ms is not None and prev_t_ms is not None:
+            dt = max(0.0, float(t_ms) - float(prev_t_ms))
+        else:
+            dt = 0.0
+        vec[N_API + 4] = math.log10(dt + 1.0)
 
     return vec
 

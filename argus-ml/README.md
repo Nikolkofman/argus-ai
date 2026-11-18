@@ -23,12 +23,16 @@ generated attack code.
 | `evaluate.py` | Metrics + **leave-one-technique-out** generalisation test. |
 | `collect.py` | **Run on Windows** — records real labelled traces from the agent log. |
 | `_smoke_test.py` | Mechanical pipeline self-test on abstract random data (no attack content). |
+| `seeds_eval.py` | The evaluation behind RESULTS: full-set + leave-one-technique-out over several seeds, with and without timestamps. |
 
 ## Feature vector (per event)
 
-`[ one-hot of the 6 hooked APIs | cross_process | exec_protect | write_protect | log10(size) | log10(dt_ms) ]`
+`[ one-hot of the 6 hooked APIs | cross_process | exec_protect | write_protect | log10(size) ]`
 
 Addresses are intentionally dropped (no signal, invites overfitting).
+Inter-event timing is intentionally **off** (`schema.USE_TIMING = False`): the
+lab timestamps measured the test harness's pace, and the model learned it as a
+shortcut — see [RESULTS §6](RESULTS.md#6-the-timing-shortcut-found-in-the-live-demo).
 `cross_process` = `target_pid != pid` — the strongest injection cue.
 
 ---
@@ -97,9 +101,10 @@ Aim for a few dozen traces per technique and a comparable number of benign
 traces, with JIT well represented. Keep the two classes roughly balanced.
 
 > **Timing caveat:** raw events carry no timestamp, so `collect.py` stamps
-> *arrival* time (small capture latency). Good enough for a first model. For
-> exact timing you can later add a `t_ms` field to the event JSON in
-> `hooks.c`; `collect.py` will use it automatically if present.
+> *arrival* time. It is saved in the traces but not used as a feature — in the
+> lab it measured how long the harness waited between steps, not the behaviour.
+> If `hooks.c` later adds a real `t_ms` to the event JSON, `collect.py` uses it
+> and timing can be re-enabled in `schema.py`.
 
 ---
 

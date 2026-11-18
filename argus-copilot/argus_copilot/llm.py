@@ -317,7 +317,8 @@ def _compose_report(pid: int, done: dict[str, dict[str, Any]],
     if ml.get("scored"):
         ml_p = ml["probability"]
         lines.append(f"- Learned model (GRU): P(injection)={ml_p} → {ml['label']} "
-                     f"(second opinion over {ml['n_events']} events)")
+                     f"(second opinion over {ml['n_events']} events)"
+                     + (f" — caveat: {ml['caveat']}" if ml.get("caveat") else ""))
         if (ml["label"] == "injection") != (cls != "benign"):
             lines.append("  - The learned model disagrees with the rule-based evidence. "
                          "The rule-based evidence drives the classification; the "

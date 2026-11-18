@@ -16,8 +16,10 @@ Live feedback: it prints a line when it starts capturing a process and when it
 saves a trace, so you can see it working in real time.
 
 Timing note: the raw events carry no timestamp, so t_ms here is arrival time
-relative to that process's first event. Good enough for a first model; if you
-later add a real timestamp field to the event JSON, it is used automatically.
+relative to that process's first event. It is recorded but NOT used as a model
+feature (schema.USE_TIMING = False): arrival time measured the test harness's
+pace, not the behaviour (see RESULTS §6). If the hook DLL later stamps real
+event times, collect.py picks them up and timing can be re-enabled.
 
 Typical use (one console, left running):
     python collect.py --agent-log "..\\build\\bin\\Debug\\argus_agent.log" ^

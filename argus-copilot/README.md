@@ -188,10 +188,13 @@ features it was trained on.
 
 The score appears in the report and the JSON verdict, but it **does not
 override** the rule-based classification. When the two disagree, the report says
-so. Where they can disagree: in-process self-injection looks almost like a
-benign JIT, so the GRU only catches it when that technique is in its training
-set (see argus-ml's RESULTS, leave-one-technique-out). With the trained
-`model.pt` it agrees with the rules on the sample capture (P(injection) = 0.82).
+so. The disagreement is useful: in the live dashboard demo it showed the GRU
+at 0.35 ("benign") on a CRITICAL process. That led to finding that the first
+model had learned the test harness's pauses from arrival-time stamps, which the
+live agent log does not have (argus-ml RESULTS §6). With the retrained,
+timing-free `model.pt` it agrees with the rules on the sample capture
+(P(injection) = 0.98). Its known blind spot remains: in-process
+self-injection is only caught when that technique is in the training set.
 
 ## Design decisions
 
