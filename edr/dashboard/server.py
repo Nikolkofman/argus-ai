@@ -93,6 +93,27 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Argus EDR Dashboard", lifespan=lifespan)
 
 
+# ── Argus Copilot: backend for the EXPLAIN button (optional) ──────────────────
+# argus-copilot/ sits next to edr/ in this repo. If it is missing or fails to
+# import, the dashboard runs exactly as before — the button just reports it.
+def _enable_copilot() -> None:
+    import sys
+    copilot = HERE.parent.parent / "argus-copilot"
+    for p in (copilot, copilot / "dashboard_integration"):
+        if str(p) not in sys.path:
+            sys.path.insert(0, str(p))
+    import explain_route
+    explain_route.configure(lambda: _find_bin_dir() / "argus_agent.log")
+    app.include_router(explain_route.router)
+
+
+try:
+    _enable_copilot()
+    print("[COPILOT] EXPLAIN enabled", flush=True)
+except Exception as _exc:  # never let the add-on break the dashboard
+    print(f"[COPILOT] EXPLAIN disabled: {_exc}", flush=True)
+
+
 # ── Helpers ───────────────────────────────────────────────────────────────────
 def now_ts() -> str:
     return datetime.now(timezone.utc).strftime("%H:%M:%S")

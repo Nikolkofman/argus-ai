@@ -1,0 +1,14 @@
+{"type":"PROCESS_VERDICT","pid":6264,"severity":"LOW","trigger":"VirtualAllocEx"}
+[IPC] event: {"api":"VirtualAllocEx","pid":6264,"target_pid":6264,"address":"000001EE02E50000","size":4096,"protect":4}
+{"pid":6264,"process_name":"benign_app.exe","finding_type":"FINDING_PRIVATE_EXECUTABLE","severity":"HIGH","region":{"base_address":"0x7ffab8b20000","size":65536,"protect":32,"type":131072,"state":4096},"detail":{"reason":"Private committed executable memory region","yara_rule":"","pe_anomaly":""}}
+{"type":"PROCESS_VERDICT","pid":6264,"severity":"MEDIUM","trigger":"VirtualProtect(protect=0x20)"}
+[IPC] event: {"api":"VirtualProtect","pid":6264,"target_pid":6264,"address":"000001EE02E50000","size":4096,"protect":32}
+{"pid":6264,"process_name":"benign_app.exe","finding_type":"FINDING_PRIVATE_EXECUTABLE","severity":"HIGH","region":{"base_address":"0x1ee02e50000","size":4096,"protect":32,"type":131072,"state":4096},"detail":{"reason":"Private committed executable memory region","yara_rule":"","pe_anomaly":""}}
+{"pid":6264,"process_name":"benign_app.exe","finding_type":"FINDING_PRIVATE_EXECUTABLE","severity":"HIGH","region":{"base_address":"0x7ffab8b20000","size":65536,"protect":32,"type":131072,"state":4096},"detail":{"reason":"Private committed executable memory region","yara_rule":"","pe_anomaly":""}}
+{"type":"PROCESS_VERDICT","pid":27956,"severity":"LOW","trigger":"VirtualAllocEx"}
+[IPC] event: {"api":"VirtualAllocEx","pid":27956,"target_pid":27956,"address":"000002E144590000","size":4096,"protect":4}
+{"pid":27956,"process_name":"benign_app.exe","finding_type":"FINDING_PRIVATE_EXECUTABLE","severity":"HIGH","region":{"base_address":"0x7ffab8b20000","size":65536,"protect":32,"type":131072,"state":4096},"detail":{"reason":"Private committed executable memory region","yara_rule":"","pe_anomaly":""}}
+{"type":"PROCESS_VERDICT","pid":27956,"severity":"MEDIUM","trigger":"VirtualProtect(protect=0x20)"}
+[IPC] event: {"api":"VirtualProtect","pid":27956,"target_pid":27956,"address":"000002E144590000","size":4096,"protect":32}
+{"pid":27956,"process_name":"benign_app.exe","finding_type":"FINDING_PRIVATE_EXECUTABLE","severity":"HIGH","region":{"base_address":"0x2e144590000","size":4096,"protect":32,"type":131072,"state":4096},"detail":{"reason":"Private committed executable memory region","yara_rule":"","pe_anomaly":""}}
+{"pid":27956,"process_name":"benign_app.exe","finding_type":"FINDING_PRIVATE_EXECUTABLE","severity":"HIGH","region":{"base_address":"0x7ffab8b20000","size":65536,"protect":32,"type":131072,"state":4096},"detail":{"reason":"Private committed executable memory region","yara_rule":"","pe_anomaly":""}}

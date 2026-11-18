@@ -260,6 +260,43 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 ::-webkit-scrollbar-thumb:hover{background:var(--text3)}
 .pulse-in{animation:pulse-bg .5s ease}
 @keyframes pulse-bg{0%{background:rgba(0,180,220,.08)}100%{background:transparent}}
+
+/* ── Copilot: EXPLAIN button + report panel ─────────────────────────── */
+.explain-btn{float:right;white-space:nowrap;font-family:var(--font);font-size:8px;font-weight:700;letter-spacing:1px;
+  padding:2px 7px;border-radius:10px;border:1px solid var(--cyan2);cursor:pointer;
+  background:rgba(0,150,180,.12);color:var(--cyan);transition:all .2s}
+.explain-btn:hover{background:rgba(0,180,220,.25);box-shadow:0 0 8px rgba(0,200,255,.25)}
+#cp-panel{position:fixed;top:0;right:0;height:100vh;width:min(560px,94vw);z-index:50;
+  background:var(--bg2);border-left:1px solid var(--border2);
+  box-shadow:-12px 0 32px rgba(0,0,0,.5);display:flex;flex-direction:column;
+  transform:translateX(102%);transition:transform .25s ease}
+#cp-panel.open{transform:translateX(0)}
+#cp-panel .panel-hdr{font-size:10px}
+#cp-close{margin-left:auto;background:none;border:0;color:var(--text2);cursor:pointer;
+  font-family:var(--font);font-size:16px;line-height:1}
+#cp-close:hover{color:var(--cyan)}
+#cp-body{flex:1;overflow-y:auto;padding:14px 16px;font-size:12px;line-height:1.6}
+.cp-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.cp-chip{font-size:9px;font-weight:700;letter-spacing:1px;padding:2px 8px;border-radius:10px;
+  background:var(--bg3);color:var(--text2);border:1px solid var(--border2)}
+.cp-chip.cp-malicious{color:var(--high);border-color:var(--high);background:#2a1010}
+.cp-chip.cp-suspicious{color:var(--medium);border-color:var(--medium);background:#2a1a00}
+.cp-chip.cp-benign{color:var(--green);border-color:var(--green);background:#0a2010}
+.cp-chip.cp-sev-CRITICAL{color:var(--critical);border-color:var(--critical)}
+.cp-chip.cp-sev-HIGH{color:var(--high)} .cp-chip.cp-sev-MEDIUM{color:var(--medium)}
+.cp-chip.cp-sev-LOW{color:var(--low)}
+.cp-trace{font-size:10px;color:var(--text3);margin-bottom:12px;word-break:break-word}
+.cp-trace b{color:var(--hook);font-weight:400}
+.cp-h{color:var(--cyan);font-size:12px;font-weight:700;letter-spacing:1px;margin:2px 0 8px}
+.cp-li{padding-left:12px;position:relative;margin:3px 0;word-break:break-word}
+.cp-li::before{content:'›';position:absolute;left:0;color:var(--cyan2)}
+.cp-li2{padding-left:26px;color:var(--text2)} .cp-li2::before{left:14px}
+.cp-sp{height:8px}
+#cp-body b{color:#e6f2ff}
+#cp-body i{color:var(--text3)}
+#cp-body code{color:var(--yara)}
+.cp-wait{color:var(--text2);letter-spacing:2px}
+.cp-err{color:var(--high)}
 </style>
 </head>
 <body>
@@ -409,6 +446,15 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
   </div>
 </div>
 <div id="toast-area"></div>
+
+<!-- Copilot report panel (EXPLAIN) -->
+<aside id="cp-panel" aria-label="Copilot incident report">
+  <div class="panel-hdr">
+    <span class="panel-hdr-icon">◈</span> <span id="cp-title">COPILOT</span>
+    <button id="cp-close" title="Close (Esc)">×</button>
+  </div>
+  <div id="cp-body"></div>
+</aside>
 
 <script>
 // ── Constants ────────────────────────────────────────────────────────
@@ -734,6 +780,7 @@ function renderProcessCard(pid) {
       Hooks: <span>${proc.events.length}</span> &nbsp;
       Scans: <span>${proc.scans||0}</span> &nbsp;
       Finds: <span>${proc.findings||0}</span>
+      <button class="explain-btn" data-pid="${escapeHtml(pid)}" title="Copilot incident report">EXPLAIN</button>
     </div>
     ${(proc.yara_rules||[]).map(r =>
       `<div class="yara-pill" title="${escapeHtml(r)}">⚡ ${escapeHtml(r)}</div>`).join('')}
@@ -1066,6 +1113,66 @@ function ftCls(ft) {
   if (ft === 'FINDING_YARA_MATCH') return 'ft-yara';
   if (ft === 'FINDING_PRIVATE_EXECUTABLE') return 'ft-private';
   return 'ft-pe';
+}
+
+// ── Copilot: EXPLAIN ──────────────────────────────────────────────────
+document.getElementById('proc-list').addEventListener('click', e => {
+  const btn = e.target.closest('.explain-btn');
+  if (btn) explainProcess(btn.dataset.pid);
+});
+document.getElementById('cp-close').addEventListener('click', closeExplain);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeExplain(); });
+
+function closeExplain() { document.getElementById('cp-panel').classList.remove('open'); }
+
+// Tiny Markdown → HTML for the report. Text is escaped first, so the report
+// (which quotes attacker-influenced telemetry) can never inject markup.
+function cpMarkdown(md) {
+  const text = md.replace(/```json[\s\S]*?```/g, '').trim();   // shown as chips instead
+  return text.split('\n').map(line => {
+    let l = escapeHtml(line)
+      .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
+      .replace(/`([^`]+)`/g, '<code>$1</code>')
+      .replace(/^_(.+)_$/, '<i>$1</i>');
+    if (/^## /.test(line))   return `<div class="cp-h">${l.slice(3)}</div>`;
+    if (/^\s+- /.test(line)) return `<div class="cp-li cp-li2">${l.replace(/^\s+- /, '')}</div>`;
+    if (/^- /.test(line))    return `<div class="cp-li">${l.slice(2)}</div>`;
+    if (!line.trim())        return '<div class="cp-sp"></div>';
+    return `<div>${l}</div>`;
+  }).join('');
+}
+
+function cpChip(text, cls) {
+  return `<span class="cp-chip ${cls || ''}">${escapeHtml(text)}</span>`;
+}
+
+async function explainProcess(pid) {
+  const body = document.getElementById('cp-body');
+  setText('cp-title', `COPILOT · PID ${pid}`);
+  body.innerHTML = '<div class="cp-wait">ANALYZING…</div>';
+  document.getElementById('cp-panel').classList.add('open');
+  try {
+    const res  = await fetch('/api/explain/' + encodeURIComponent(pid), {method: 'POST'});
+    const data = await res.json().catch(() => ({}));
+    if (res.status === 404 && !data.detail)
+      throw new Error('Copilot is not enabled on the server (see the dashboard console).');
+    if (!res.ok) throw new Error(data.detail || res.statusText);
+
+    const c = data.classification || {};
+    const chips = [];
+    if (c.classification) chips.push(cpChip(c.classification.toUpperCase(), 'cp-' + c.classification));
+    if (c.severity)       chips.push(cpChip(c.severity, 'cp-sev-' + c.severity));
+    if (c.technique_id)   chips.push(cpChip(c.technique_id));
+    if (c.ml_probability != null) chips.push(cpChip('GRU p=' + c.ml_probability));
+    chips.push(cpChip(data.backend || '?'));
+    const tools = (data.tool_trace || []).map(t => `<b>${escapeHtml(t.name)}</b>`).join(' → ');
+
+    body.innerHTML = `<div class="cp-chips">${chips.join('')}</div>`
+      + `<div class="cp-trace">tools: ${tools || '—'}</div>`
+      + cpMarkdown(data.report || '');
+  } catch (err) {
+    body.innerHTML = `<div class="cp-err">Could not explain PID ${escapeHtml(pid)}: ${escapeHtml(err.message)}</div>`;
+  }
 }
 
 // ── Boot ──────────────────────────────────────────────────────────────

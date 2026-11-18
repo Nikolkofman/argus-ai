@@ -127,7 +127,24 @@ def _int(v: Any) -> Optional[int]:
 
 
 def _name_of(obj: dict[str, Any]) -> str:
-    return str(obj.get("process") or obj.get("name") or obj.get("image") or "")
+    return str(obj.get("process_name") or obj.get("process") or obj.get("name")
+               or obj.get("image") or "")
+
+
+_SOURCE_BY_TYPE = {"FINDING_YARA_MATCH": "yara",
+                   "FINDING_PRIVATE_EXECUTABLE": "memory-scanner"}
+
+
+def parse_addr(v: Any) -> Optional[int]:
+    """'0x1ee02e50000' / '000001EE02E50000' / 123 -> int (None if unparsable)."""
+    if v is None or v == "":
+        return None
+    if isinstance(v, int):
+        return v
+    try:
+        return int(str(v), 16)
+    except ValueError:
+        return None
 
 
 def _as_finding(obj: dict[str, Any]) -> Optional[dict[str, Any]]:
@@ -136,16 +153,37 @@ def _as_finding(obj: dict[str, Any]) -> Optional[dict[str, Any]]:
         ftype = obj.get("rule") or obj.get("name") or "FINDING_UNKNOWN"
     if not ftype:
         return None
-    return {
-        "type": str(ftype),
+    ftype = str(ftype).upper()
+    out: dict[str, Any] = {
+        "type": ftype,
         "severity": str(obj.get("severity", "MEDIUM")).upper(),
-        "source": obj.get("source", ""),
-        "detail": obj.get("detail", ""),
+        "source": obj.get("source") or _SOURCE_BY_TYPE.get(
+            ftype, "pe-sieve" if "PE" in ftype else ""),
     }
+    detail = obj.get("detail")
+    if isinstance(detail, dict):            # real scanner output
+        for k in ("reason", "yara_rule", "pe_anomaly"):
+            if detail.get(k):
+                out[k] = str(detail[k])
+    elif detail:
+        out["detail"] = str(detail)
+    region = obj.get("region")
+    if isinstance(region, dict):
+        base = parse_addr(region.get("base_address"))
+        out["region"] = {"base_address": hex(base) if base is not None else None,
+                         "size": region.get("size"), "protect": region.get("protect")}
+    return out
+
+
+def _finding_key(f: dict[str, Any]) -> tuple:
+    r = f.get("region") or {}
+    return (f["type"], r.get("base_address"), f.get("yara_rule"), f.get("pe_anomaly"),
+            f.get("detail"))
 
 
 def _as_verdict(obj: dict[str, Any]) -> Optional[dict[str, Any]]:
-    is_verdict = str(obj.get("type", "")).lower() == "verdict" or "verdict" in obj
+    is_verdict = (str(obj.get("type", "")).lower() in ("verdict", "process_verdict")
+                  or "verdict" in obj)
     if not is_verdict:
         return None
     sev = obj.get("severity") or obj.get("verdict") or obj.get("state") or "NONE"
@@ -153,11 +191,12 @@ def _as_verdict(obj: dict[str, Any]) -> Optional[dict[str, Any]]:
         "severity": str(sev).upper(),
         "rules": list(obj.get("rules", [])),
         "reason": obj.get("reason", ""),
+        "trigger": obj.get("trigger", ""),
     }
 
 
 def _hook_event(obj: dict[str, Any]) -> dict[str, Any]:
-    keep = ("api", "pid", "target_pid", "size", "protect", "t_ms")
+    keep = ("api", "pid", "target_pid", "address", "start_address", "size", "protect", "t_ms")
     return {k: obj[k] for k in keep if k in obj}
 
 
@@ -198,7 +237,13 @@ def ingest_obj(cap: Capture, obj: Any) -> None:
     if finding is not None:
         proc = cap._proc(pid)
         proc.name = proc.name or _name_of(obj)
-        proc.findings.append(finding)
+        key = _finding_key(finding)
+        for existing in proc.findings:
+            if _finding_key(existing) == key:
+                existing["count"] = existing.get("count", 1) + 1
+                break
+        else:
+            proc.findings.append(finding)
         return
 
     verdict = _as_verdict(obj)

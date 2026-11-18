@@ -31,6 +31,9 @@ cd argus-copilot
 python -m argus_copilot analyze data/remote_thread.ndjson --mock -v
 python evals/run_evals.py
 
+# The EDR dashboard with the EXPLAIN button (Windows, after building edr/)
+edr\start_dashboard.bat        # as Administrator → RUN DEMO → EXPLAIN on a process
+
 # ML pipeline self-test (needs torch)
 cd ../argus-ml
 pip install -r requirements.txt

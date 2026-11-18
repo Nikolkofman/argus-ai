@@ -64,6 +64,39 @@ class ParserTests(unittest.TestCase):
         self.assertEqual(len(cap), 0)
 
 
+class RealAgentLogTests(unittest.TestCase):
+    """Slices of real ArgusEDR agent logs (evals/cases/real_*.ndjson)."""
+    CASES = ROOT / "evals" / "cases"
+
+    def test_verdicts_and_findings_in_real_format(self):
+        cap = parse_file(self.CASES / "real_shellcode.ndjson")
+        p = cap.get(25320)
+        self.assertEqual(p.name, "shellcode_runner.exe")
+        self.assertEqual(p.verdict_severity, "CRITICAL")
+        rules = sorted(f.get("yara_rule") for f in p.findings if f.get("yara_rule"))
+        self.assertEqual(len(rules), 2)
+        self.assertTrue(all(f["region"]["base_address"].startswith("0x") for f in p.findings))
+        # the scanner re-reports regions on every scan; they are deduplicated with a count
+        self.assertTrue(any(f.get("count", 1) > 1 for f in p.findings))
+
+    def test_finding_context_separates_noise_from_injection(self):
+        cap = parse_file(self.CASES / "real_benign_jit.ndjson")
+        fs = tools.get_findings(cap, 6264)["findings"]
+        shared = [f for f in fs if f["seen_in_other_pids"] > 0]
+        own = [f for f in fs if f["allocated_via_hooked_call"]]
+        self.assertEqual(len(shared), 1)
+        self.assertEqual(len(own), 1)
+        self.assertFalse(any(f["rwx"] for f in fs))
+
+    def test_real_cases_classified(self):
+        b = make_backend(use_mock=True)
+        expect = {("real_benign_jit", 6264): "benign", ("real_shellcode", 25320): "malicious",
+                  ("real_hollowing", 4048): "malicious"}
+        for (case, pid), cls in expect.items():
+            res = analyze_process(b, parse_file(self.CASES / f"{case}.ndjson"), pid)
+            self.assertEqual(res.classification["classification"], cls, case)
+
+
 class ToolTests(unittest.TestCase):
     def test_chain_summary(self):
         cap = parse_file(DATA / "remote_thread.ndjson")
@@ -142,12 +175,31 @@ class ApiTests(unittest.TestCase):
     def test_dashboard_route(self):
         sys.path.insert(0, str(ROOT / "dashboard_integration"))
         from fastapi import FastAPI
-        from explain_route import router
+        import explain_route
+        explain_route.configure(lambda: DATA / "remote_thread.ndjson")
         app = FastAPI()
-        app.include_router(router)
-        with mock.patch.dict(os.environ, {"ARGUS_AGENT_LOG": str(DATA / "remote_thread.ndjson")}):
-            r = TestClient(app).post("/api/explain/4120").json()
+        app.include_router(explain_route.router)
+        client = TestClient(app)
+        self.assertTrue(client.get("/api/explain/status").json()["log_exists"])
+        r = client.post("/api/explain/4120").json()
         self.assertEqual(r["classification"]["severity"], "HIGH")
+        self.assertEqual(client.post("/api/explain/1").status_code, 404)
+
+    @unittest.skipUnless((ROOT.parent / "edr" / "dashboard" / "server.py").is_file(),
+                         "edr/ dashboard not present next to argus-copilot/")
+    def test_edr_dashboard_has_explain(self):
+        """The real dashboard in this repo serves the EXPLAIN route."""
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(
+            "edr_dashboard_server", ROOT.parent / "edr" / "dashboard" / "server.py")
+        server = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(server)
+        with mock.patch.dict(os.environ, {"ARGUS_AGENT_LOG": str(DATA / "remote_thread.ndjson")}):
+            r = TestClient(server.app).post("/api/explain/4120")
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.json()["classification"]["classification"], "malicious")
+        html = (ROOT.parent / "edr" / "dashboard" / "index.html").read_text(encoding="utf-8")
+        self.assertIn("explain-btn", html)
 
 
 class _FakeMessagesAPI(BaseHTTPRequestHandler):

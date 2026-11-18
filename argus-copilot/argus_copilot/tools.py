@@ -14,7 +14,7 @@ from __future__ import annotations
 from typing import Any
 
 from . import mitre
-from .events import Capture
+from .events import Capture, parse_addr
 
 _EXEC_MASK = 0x10 | 0x20 | 0x40 | 0x80        # PAGE_EXECUTE*
 _WRITE_MASK = 0x04 | 0x08 | 0x40 | 0x80       # PAGE_READWRITE / WRITECOPY / EXECUTE_RW*
@@ -74,6 +74,9 @@ def get_process_timeline(cap: Capture, pid: int) -> dict[str, Any]:
             if "protect" in ev:
                 row["protect"] = hex(int(ev["protect"])) if ev["protect"] is not None else None
                 row["exec"], row["write"] = is_exec, is_write
+            addr = parse_addr(ev.get("address") or ev.get("start_address"))
+            if addr is not None:
+                row["address"] = hex(addr)
             if "t_ms" in ev:
                 row["t_ms"] = ev["t_ms"]
             events.append(row)
@@ -98,16 +101,54 @@ def get_process_timeline(cap: Capture, pid: int) -> dict[str, Any]:
 
 
 def get_findings(cap: Capture, pid: int) -> dict[str, Any]:
-    """Memory-scanner / YARA findings and Diamond FSM verdicts for one process."""
+    """Memory-scanner / YARA / PE-Sieve findings and Diamond FSM verdicts for one
+    process, with context that helps separate real injection from noise."""
     proc = cap.get(int(pid))
     if proc is None:
         return _not_found(cap, pid)
+
+    # regions this process received through hooked allocation calls -> allocating pid
+    allocated: dict[int, Any] = {}
+    for ev in proc.events:
+        if ev.get("api") in ALLOC_APIS:
+            a = parse_addr(ev.get("address"))
+            if a is not None:
+                allocated[a] = ev.get("pid")
+
+    # finding base addresses per *other* process (shared regions are rarely injection)
+    others: dict[int, set] = {}
+    for other in cap.processes.values():
+        if other.pid == proc.pid:
+            continue
+        for f in other.findings:
+            b = parse_addr((f.get("region") or {}).get("base_address"))
+            if b is not None:
+                others.setdefault(b, set()).add(other.pid)
+
+    findings = []
+    for f in proc.findings:
+        f = dict(f)
+        base = parse_addr((f.get("region") or {}).get("base_address"))
+        if base is not None:
+            f["rwx"] = (f.get("region") or {}).get("protect") == PAGE_EXECUTE_READWRITE
+            f["allocated_via_hooked_call"] = base in allocated
+            if base in allocated:
+                f["allocated_by_pid"] = allocated[base]
+            f["seen_in_other_pids"] = len(others.get(base, ()))
+        findings.append(f)
+
     return {
         "pid": proc.pid, "found": True, "name": proc.name or None,
-        "findings": proc.findings,
+        "findings": findings,
         "correlator_verdicts": proc.verdicts,
         "max_finding_severity": proc.finding_severity,
         "correlator_severity": proc.verdict_severity,
+        "notes": [
+            "FINDING_PRIVATE_EXECUTABLE alone is weak evidence: JIT engines create "
+            "private executable memory too.",
+            "seen_in_other_pids > 0 means the same region is flagged in other processes "
+            "(shared/system memory), which is unlikely to be injection into this one.",
+        ],
     }
 
 
@@ -156,10 +197,12 @@ TOOL_SPECS: list[dict[str, Any]] = [
     {
         "name": "get_findings",
         "description": (
-            "Return memory-scanner (PE-Sieve) and YARA findings for a process, "
-            "plus the rule-based correlator's (Diamond FSM) severity verdicts. "
-            "An empty list means the scanners found nothing, not that the "
-            "process is proven clean."
+            "Return memory-scanner, YARA and PE-Sieve findings for a process "
+            "(deduplicated, with region protection, whether the region came from "
+            "a hooked allocation call, and whether other processes have the same "
+            "region flagged), plus the rule-based correlator's (Diamond FSM) "
+            "severity verdicts. An empty list means the scanners found nothing, "
+            "not that the process is proven clean."
         ),
         "input_schema": _PID_SCHEMA,
     },

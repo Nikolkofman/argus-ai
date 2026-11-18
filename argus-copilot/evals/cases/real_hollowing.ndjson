@@ -1,0 +1,25 @@
+{"type":"PROCESS_VERDICT","pid":4048,"severity":"MEDIUM","trigger":"VirtualAllocEx"}
+[IPC] event: {"api":"VirtualAllocEx","pid":10588,"target_pid":4048,"address":"0000000140000000","size":368640,"protect":64}
+{"pid":4048,"process_name":"Notepad.exe","finding_type":"FINDING_PRIVATE_EXECUTABLE","severity":"HIGH","region":{"base_address":"0x140000000","size":368640,"protect":64,"type":131072,"state":4096},"detail":{"reason":"Private committed executable memory region","yara_rule":"","pe_anomaly":""}}
+{"type":"PROCESS_VERDICT","pid":4048,"severity":"HIGH","trigger":"WriteProcessMemory"}
+[IPC] event: {"api":"WriteProcessMemory","pid":10588,"target_pid":4048,"address":"0000000140000000","size":4096}
+[IPC] event: {"api":"WriteProcessMemory","pid":10588,"target_pid":4048,"address":"0000000140001000","size":159744}
+{"pid":4048,"process_name":"Notepad.exe","finding_type":"FINDING_PRIVATE_EXECUTABLE","severity":"HIGH","region":{"base_address":"0x140000000","size":368640,"protect":64,"type":131072,"state":4096},"detail":{"reason":"Private committed executable memory region","yara_rule":"","pe_anomaly":""}}
+[IPC] event: {"api":"WriteProcessMemory","pid":10588,"target_pid":4048,"address":"0000000140028000","size":4096}
+{"pid":4048,"process_name":"Notepad.exe","finding_type":"FINDING_PRIVATE_EXECUTABLE","severity":"HIGH","region":{"base_address":"0x140000000","size":368640,"protect":64,"type":131072,"state":4096},"detail":{"reason":"Private committed executable memory region","yara_rule":"","pe_anomaly":""}}
+[IPC] event: {"api":"WriteProcessMemory","pid":10588,"target_pid":4048,"address":"0000000140029000","size":45056}
+{"pid":4048,"process_name":"Notepad.exe","finding_type":"FINDING_PRIVATE_EXECUTABLE","severity":"HIGH","region":{"base_address":"0x140000000","size":368640,"protect":64,"type":131072,"state":4096},"detail":{"reason":"Private committed executable memory region","yara_rule":"","pe_anomaly":""}}
+[IPC] event: {"api":"WriteProcessMemory","pid":10588,"target_pid":4048,"address":"0000000140034000","size":4096}
+{"pid":4048,"process_name":"Notepad.exe","finding_type":"FINDING_PRIVATE_EXECUTABLE","severity":"HIGH","region":{"base_address":"0x140000000","size":368640,"protect":64,"type":131072,"state":4096},"detail":{"reason":"Private committed executable memory region","yara_rule":"","pe_anomaly":""}}
+[IPC] event: {"api":"WriteProcessMemory","pid":10588,"target_pid":4048,"address":"0000000140037000","size":8192}
+{"pid":4048,"process_name":"Notepad.exe","finding_type":"FINDING_PRIVATE_EXECUTABLE","severity":"HIGH","region":{"base_address":"0x140000000","size":368640,"protect":64,"type":131072,"state":4096},"detail":{"reason":"Private committed executable memory region","yara_rule":"","pe_anomaly":""}}
+[IPC] event: {"api":"WriteProcessMemory","pid":10588,"target_pid":4048,"address":"0000000140039000","size":4096}
+{"pid":4048,"process_name":"Notepad.exe","finding_type":"FINDING_PRIVATE_EXECUTABLE","severity":"HIGH","region":{"base_address":"0x140000000","size":368640,"protect":64,"type":131072,"state":4096},"detail":{"reason":"Private committed executable memory region","yara_rule":"","pe_anomaly":""}}
+[IPC] event: {"api":"WriteProcessMemory","pid":10588,"target_pid":4048,"address":"000000014003A000","size":126976}
+{"pid":4048,"process_name":"Notepad.exe","finding_type":"FINDING_PRIVATE_EXECUTABLE","severity":"HIGH","region":{"base_address":"0x140000000","size":368640,"protect":64,"type":131072,"state":4096},"detail":{"reason":"Private committed executable memory region","yara_rule":"","pe_anomaly":""}}
+{"pid":4048,"process_name":"Notepad.exe","finding_type":"FINDING_PRIVATE_EXECUTABLE","severity":"HIGH","region":{"base_address":"0x140000000","size":368640,"protect":64,"type":131072,"state":4096},"detail":{"reason":"Private committed executable memory region","yara_rule":"","pe_anomaly":""}}
+[IPC] event: {"api":"WriteProcessMemory","pid":10588,"target_pid":4048,"address":"0000000140059000","size":4096}
+{"pid":4048,"process_name":"Notepad.exe","finding_type":"FINDING_PRIVATE_EXECUTABLE","severity":"HIGH","region":{"base_address":"0x140000000","size":368640,"protect":64,"type":131072,"state":4096},"detail":{"reason":"Private committed executable memory region","yara_rule":"","pe_anomaly":""}}
+[IPC] event: {"api":"WriteProcessMemory","pid":10588,"target_pid":4048,"address":"0000003FA5F86010","size":8}
+{"pid":4048,"process_name":"Notepad.exe","finding_type":"FINDING_PRIVATE_EXECUTABLE","severity":"HIGH","region":{"base_address":"0x140000000","size":233472,"protect":64,"type":131072,"state":4096},"detail":{"reason":"Private committed executable memory region","yara_rule":"","pe_anomaly":""}}
+{"pid":4048,"process_name":"Notepad.exe","finding_type":"FINDING_PRIVATE_EXECUTABLE","severity":"HIGH","region":{"base_address":"0x14003a000","size":131072,"protect":64,"type":131072,"state":4096},"detail":{"reason":"Private committed executable memory region","yara_rule":"","pe_anomaly":""}}

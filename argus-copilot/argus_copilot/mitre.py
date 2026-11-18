@@ -43,6 +43,10 @@ TECHNIQUES: dict[str, Technique] = {t.id: t for t in [
     Technique("T1055.004", "Process Injection: Asynchronous Procedure Call",
               "https://attack.mitre.org/techniques/T1055/004/",
               "Running foreign code in a process via its APC queue."),
+    Technique("T1620", "Reflective Code Loading",
+              "https://attack.mitre.org/techniques/T1620/",
+              "Loading code into a process's own memory and running it without "
+              "the normal loader, so it never exists as a file on disk."),
     Technique("T1055.012", "Process Injection: Process Hollowing",
               "https://attack.mitre.org/techniques/T1055/012/",
               "A legitimate process's image is replaced in memory so it runs "
@@ -55,6 +59,15 @@ FINDING_MAP: dict[str, tuple[str, str, str]] = {
         "T1055", "approximate",
         "Executable code in a region with no backing module is evidence of "
         "injection in general; it does not identify the sub-technique."),
+    "FINDING_PRIVATE_EXECUTABLE": (
+        "T1055", "approximate",
+        "Private executable memory is consistent with injected code, but JIT "
+        "engines (.NET, V8, Java) create it legitimately — weak evidence alone."),
+    "FINDING_PE_ANOMALIES": (
+        "T1055", "approximate",
+        "PE-Sieve found a modified or implanted PE in memory; the pe_anomaly "
+        "detail decides the sub-technique (replaced image → T1055.012, "
+        "implanted PE → T1055.002)."),
     "FINDING_UNBACKED_EXEC": (
         "T1055", "approximate",
         "Executable private memory with no file behind it — generic "
@@ -103,9 +116,20 @@ def get_technique(technique_id: str) -> dict[str, Any]:
     return {"matched": True, "confidence": "exact", **asdict(t)}
 
 
+_NAME_HINTS = [("HOLLOW", "T1055.012"), ("REPLACED", "T1055.012"),
+               ("IMPLANT", "T1055.002"), ("REFLECTIVE", "T1620"),
+               ("HIJACK", "T1055.003"), ("APC", "T1055.004")]
+
+
 def lookup_by_finding(finding_type: str) -> dict[str, Any]:
     key = str(finding_type).upper()
     entry = FINDING_MAP.get(key)
+    if entry is None:
+        for hint, tid in _NAME_HINTS:  # unknown finding name: best guess from its wording
+            if hint in key:
+                entry = (tid, "approximate",
+                         f"Mapped from the finding name ({hint.lower()}); not a curated mapping.")
+                break
     if entry is None:
         return {"matched": False, "finding_type": key,
                 "error": "No ATT&CK mapping for this finding type.",

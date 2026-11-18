@@ -1,37 +1,29 @@
-# Dashboard integration — "Explain" button
+# Dashboard integration — EXPLAIN button
 
-Adds an **Explain** button next to each process in the ArgusEDR FastAPI
-dashboard. Clicking it opens a side panel with the Copilot's incident report
-for that PID, built from the same `argus_agent.log` the dashboard already reads.
+**In this repo it is already wired.** `edr/dashboard/server.py` has a short,
+optional block that includes `explain_route.router`, and `edr/dashboard/index.html`
+adds an **EXPLAIN** button to every process card plus a side panel for the report.
+Start the dashboard as usual (`edr\start_dashboard.bat`, as Administrator),
+click **RUN DEMO**, then **EXPLAIN** on a process.
 
-## 3 steps
+- Without `ANTHROPIC_API_KEY` the panel shows the offline mock report.
+- With a key set before starting the dashboard, Claude writes the report.
+- With torch installed and `argus-ml/model.pt` present, the GRU score is included.
+- `GET /api/explain/status` shows the active backend, the log path and ML status.
 
-1. **Install the Copilot** into the dashboard's Python environment:
+## Other setups
 
-   ```bash
-   pip install -e "path/to/argus-copilot[api]"      # add [claude] to use the real model
-   ```
-
-2. **Add the route** — copy `explain_route.py` next to `dashboard/server.py`
-   and add two lines to `server.py`:
+1. Make `argus-copilot/` and this folder importable (or `pip install -e "argus-copilot[api]"`).
+2. In the FastAPI app:
 
    ```python
-   from explain_route import router as explain_router
-   app.include_router(explain_router)
+   import explain_route
+   explain_route.configure(lambda: Path("path/to/argus_agent.log"))  # or set ARGUS_AGENT_LOG
+   app.include_router(explain_route.router)
    ```
 
-   If the agent log is not at `build/bin/Release/argus_agent.log`, set
-   `ARGUS_AGENT_LOG`.
+3. Add a button that POSTs to `/api/explain/{pid}`. `explain_button.html` is a
+   standalone version of the button and panel.
 
-3. **Add the button** — paste `explain_button.html` before `</body>` in the
-   dashboard page, and where process rows are rendered:
-
-   ```js
-   row.appendChild(explainButton(pid));
-   ```
-
-Check it: `GET /api/explain/status` shows the active backend (mock or
-Claude), the log path, and whether the GRU model is loaded.
-
-Without `ANTHROPIC_API_KEY` the panel shows the offline mock report, so the demo
-works with no key and no network.
+The route is a plain `def`, so FastAPI runs it in a worker thread and a slow
+model call never blocks the dashboard's live WebSocket feed.
