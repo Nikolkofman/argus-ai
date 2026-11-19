@@ -194,6 +194,8 @@ A request body can carry `capture_text` (inline log). It can also carry
 `capture_path`, which must be inside `ARGUS_CAPTURE_ROOT`: this is a local
 analyst tool, so it binds to localhost and never reads arbitrary paths.
 
+![EXPLAIN panel in the ArgusEDR dashboard](../docs/copilot-explain.png)
+
 **In this repo the dashboard is already wired.** Every process card in the
 ArgusEDR dashboard (`edr/dashboard`) has an **EXPLAIN** button. It opens a side
 panel with the Copilot's report for that PID, built from the same

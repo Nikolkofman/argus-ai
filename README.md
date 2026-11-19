@@ -5,6 +5,8 @@ named-pipe IPC, PE-Sieve, YARA, ETW, and a rule-based correlator. This repo puts
 the original EDR together with my follow-up work: two AI layers that read the
 EDR's own telemetry.
 
+![ArgusEDR dashboard after the demo: hook events, Diamond FSM verdicts escalating to CRITICAL, a YARA match, and the attack progression](docs/dashboard.png)
+
 ```
  edr/ (C++, ArgusEDR)              argus-ml/ (PyTorch)              argus-copilot/ (LLM agent)
  ───────────────────────────       ─────────────────────────        ──────────────────────────
@@ -16,6 +18,17 @@ EDR's own telemetry.
 
 The rules decide, the model gives a second opinion, and the agent explains both,
 including when they disagree.
+
+<img src="docs/copilot-explain.png" width="560" align="right" alt="EXPLAIN panel: Claude's incident report for test_target.exe">
+
+**EXPLAIN** on a process card opens the Copilot's report, written here by Claude
+Sonnet 5.5 from the live demo. Above the report it shows the verdict
+(*malicious / CRITICAL*), the ATT&CK technique, the GRU's score (0.87, in
+agreement) and the tools the agent chose to call. In this report the agent
+noticed that the correlator cited a `FINDING_CODE_CAVE` that is missing from the
+findings list, so it did not rely on it.
+
+<br clear="right">
 
 | Folder | What it is | Start here |
 |---|---|---|
